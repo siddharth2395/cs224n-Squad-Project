@@ -614,7 +614,7 @@ class QAModel(object):
         idx2char[CHAR_UNK_ID] = _CHAR_UNK
 
         ##Create reverse char2idx
-        char2idx = {v: k for k, v in idx2char.iteritems()}
+        char2idx = {v: k for k, v in idx2char.items()}
         return char2idx, idx2char, num_chars
 
     def word_to_token_ids(self, word):
