@@ -1,14 +1,13 @@
-
 from __future__ import print_function
-import os
-from collections import Counter
-import string
+
 import io
+import os
 
 cwd = os.getcwd()
 
 import json
 import sys
+
 
 ### Usage python ensembly.py bidaf_json rnet_json output_json
 
@@ -42,7 +41,7 @@ json_out_path = 'predictions.json'
 # preds_bidaf = json.load(open(file_bidaf))
 # preds_rnet = json.load(open(file_rnet))
 
-preds_bidaf = json.load(open(os.path.join(cwd,file_bidaf)))
+preds_bidaf = json.load(open(os.path.join(cwd, file_bidaf)))
 preds_rnet = json.load(open(os.path.join(cwd, file_rnet)))
 
 new_predictions = ensemble(preds_bidaf, preds_rnet)

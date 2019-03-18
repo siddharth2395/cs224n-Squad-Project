@@ -15,7 +15,7 @@
 """This file contains functions to pretty-print a SQuAD example"""
 
 from colorama import Fore, Back, Style
-from vocab import _PAD
+
 
 # See here for more colorama formatting options:
 # https://pypi.python.org/pypi/colorama
@@ -25,25 +25,29 @@ def yellowtext(s):
     """Yellow text"""
     return Fore.YELLOW + Style.BRIGHT + s + Style.RESET_ALL + Fore.RESET
 
+
 def greentext(s):
     """Green text"""
     return Fore.GREEN + Style.BRIGHT + s + Style.RESET_ALL + Fore.RESET
+
 
 def redtext(s):
     """Red text"""
     return Fore.RED + Style.BRIGHT + s + Style.RESET_ALL + Fore.RESET
 
+
 def redback(s):
     """Red background"""
     return Back.RED + s + Back.RESET
+
 
 def magentaback(s):
     """Magenta background"""
     return Back.MAGENTA + s + Back.RESET
 
 
-
-def print_example(word2id, context_tokens, qn_tokens, true_ans_start, true_ans_end, pred_ans_start, pred_ans_end, true_answer, pred_answer, f1, em):
+def print_example(word2id, context_tokens, qn_tokens, true_ans_start, true_ans_end, pred_ans_start, pred_ans_end,
+                  true_answer, pred_answer, f1, em):
     """
     Pretty-print the results for one example.
 
@@ -65,7 +69,7 @@ def print_example(word2id, context_tokens, qn_tokens, true_ans_start, true_ans_e
     # Highlight the true answer green.
     # If the true answer span isn't in the range of the context_tokens, then this context has been truncated
     truncated = False
-    for loc in range(true_ans_start, true_ans_end+1):
+    for loc in range(true_ans_start, true_ans_end + 1):
         if loc in range(curr_context_len):
             context_tokens[loc] = greentext(context_tokens[loc])
         else:
@@ -81,7 +85,8 @@ def print_example(word2id, context_tokens, qn_tokens, true_ans_start, true_ans_e
     context_tokens[pred_ans_end] = redback(context_tokens[pred_ans_end])
 
     # Print out the context
-    print "CONTEXT: (%s is true answer, %s is predicted start, %s is predicted end, _underscores_ are unknown tokens). Length: %i" % (greentext("green text"), magentaback("magenta background"), redback("red background"), len(context_tokens))
+    print "CONTEXT: (%s is true answer, %s is predicted start, %s is predicted end, _underscores_ are unknown tokens). Length: %i" % (
+    greentext("green text"), magentaback("magenta background"), redback("red background"), len(context_tokens))
     print " ".join(context_tokens)
 
     # Print out the question, true and predicted answer, F1 and EM score

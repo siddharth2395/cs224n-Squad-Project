@@ -14,14 +14,16 @@
 
 """Downloads the GloVe vectors and unzips them"""
 
-import zipfile
 import argparse
 import os
+import zipfile
+
 from squad_preprocess import maybe_download
+
 
 def setup_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--download_dir", required=True) # where to put the downloaded glove files
+    parser.add_argument("--download_dir", required=True)  # where to put the downloaded glove files
     return parser.parse_args()
 
 

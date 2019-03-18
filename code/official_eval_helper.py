@@ -20,15 +20,14 @@ from __future__ import absolute_import
 from __future__ import division
 
 import os
-from tqdm import tqdm
+
 import numpy as np
-from six.moves import xrange
-from nltk.tokenize.moses import MosesDetokenizer
-
-from preprocessing.squad_preprocess import data_from_json, tokenize
-from vocab import UNK_ID, PAD_ID
 from data_batcher import padded, Batch
-
+from nltk.tokenize.moses import MosesDetokenizer
+from preprocessing.squad_preprocess import data_from_json, tokenize
+from six.moves import xrange
+from tqdm import tqdm
+from vocab import UNK_ID, PAD_ID
 
 
 def readnext(x):
@@ -39,8 +38,8 @@ def readnext(x):
         return x.pop(0)
 
 
-
-def refill_batches(batches, word2id, qn_uuid_data, context_token_data, qn_token_data, batch_size, context_len, question_len):
+def refill_batches(batches, word2id, qn_uuid_data, context_token_data, qn_token_data, batch_size, context_len,
+                   question_len):
     """
     This is similar to refill_batches in data_batcher.py, but:
       (1) instead of reading from (preprocessed) datafiles, it reads from the provided lists
@@ -83,19 +82,21 @@ def refill_batches(batches, word2id, qn_uuid_data, context_token_data, qn_token_
             break
 
         # Get next example
-        qn_uuid, context_tokens, qn_tokens = readnext(qn_uuid_data), readnext(context_token_data), readnext(qn_token_data)
+        qn_uuid, context_tokens, qn_tokens = readnext(qn_uuid_data), readnext(context_token_data), readnext(
+            qn_token_data)
 
     # Make into batches
     for batch_start in xrange(0, len(examples), batch_size):
-        uuids_batch, context_tokens_batch, context_ids_batch, qn_ids_batch = zip(*examples[batch_start:batch_start + batch_size])
+        uuids_batch, context_tokens_batch, context_ids_batch, qn_ids_batch = zip(
+            *examples[batch_start:batch_start + batch_size])
 
         batches.append((uuids_batch, context_tokens_batch, context_ids_batch, qn_ids_batch))
 
     return
 
 
-
-def get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, batch_size, context_len, question_len):
+def get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, batch_size, context_len,
+                        question_len):
     """
     This is similar to get_batch_generator in data_batcher.py, but with some
     differences (see explanation in refill_batches).
@@ -114,7 +115,8 @@ def get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data
 
     while True:
         if len(batches) == 0:
-            refill_batches(batches, word2id, qn_uuid_data, context_token_data, qn_token_data, batch_size, context_len, question_len)
+            refill_batches(batches, word2id, qn_uuid_data, context_token_data, qn_token_data, batch_size, context_len,
+                           question_len)
         if len(batches) == 0:
             break
 
@@ -122,8 +124,8 @@ def get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data
         (uuids, context_tokens, context_ids, qn_ids) = batches.pop(0)
 
         # Pad context_ids and qn_ids
-        qn_ids = padded(qn_ids, question_len) # pad questions to length question_len
-        context_ids = padded(context_ids, context_len) # pad contexts to length context_len
+        qn_ids = padded(qn_ids, question_len)  # pad questions to length question_len
+        context_ids = padded(context_ids, context_len)  # pad contexts to length context_len
 
         # Make qn_ids into a np array and create qn_mask
         qn_ids = np.array(qn_ids)
@@ -134,7 +136,8 @@ def get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data
         context_mask = (context_ids != PAD_ID).astype(np.int32)
 
         # Make into a Batch object
-        batch = Batch(context_ids, context_mask, context_tokens, qn_ids, qn_mask, qn_tokens=None, ans_span=None, ans_tokens=None, uuids=uuids)
+        batch = Batch(context_ids, context_mask, context_tokens, qn_ids, qn_mask, qn_tokens=None, ans_span=None,
+                      ans_tokens=None, uuids=uuids)
 
         yield batch
 
@@ -164,24 +167,23 @@ def preprocess_dataset(dataset):
         article_paragraphs = dataset['data'][articles_id]['paragraphs']
         for pid in range(len(article_paragraphs)):
 
-            context = unicode(article_paragraphs[pid]['context']) # string
+            context = unicode(article_paragraphs[pid]['context'])  # string
 
             # The following replacements are suggested in the paper
             # BidAF (Seo et al., 2016)
             context = context.replace("''", '" ')
             context = context.replace("``", '" ')
 
-            context_tokens = tokenize(context) # list of strings (lowercase)
+            context_tokens = tokenize(context)  # list of strings (lowercase)
             context = context.lower()
 
-            qas = article_paragraphs[pid]['qas'] # list of questions
+            qas = article_paragraphs[pid]['qas']  # list of questions
 
             # for each question
             for qn in qas:
-
                 # read the question text and tokenize
-                question = unicode(qn['question']) # string
-                question_tokens = tokenize(question) # list of strings
+                question = unicode(qn['question'])  # string
+                question_tokens = tokenize(question)  # list of strings
 
                 # also get the question_uuid
                 question_uuid = qn['id']
@@ -237,15 +239,16 @@ def generate_answers(session, model, word2id, qn_uuid_data, context_token_data, 
     Outputs:
       uuid2ans: dictionary mapping uuid (string) to predicted answer (string; detokenized)
     """
-    uuid2ans = {} # maps uuid to string containing predicted answer
+    uuid2ans = {}  # maps uuid to string containing predicted answer
     data_size = len(qn_uuid_data)
-    num_batches = ((data_size-1) / model.FLAGS.batch_size) + 1
+    num_batches = ((data_size - 1) / model.FLAGS.batch_size) + 1
     batch_num = 0
     detokenizer = MosesDetokenizer()
 
     print "Generating answers..."
 
-    for batch in get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, model.FLAGS.batch_size, model.FLAGS.context_len, model.FLAGS.question_len):
+    for batch in get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, model.FLAGS.batch_size,
+                                     model.FLAGS.context_len, model.FLAGS.question_len):
 
         # Get the predicted spans
         pred_start_batch, pred_end_batch, _ = model.get_start_end_pos(session, batch)
@@ -256,16 +259,15 @@ def generate_answers(session, model, word2id, qn_uuid_data, context_token_data, 
 
         # For each example in the batch:
         for ex_idx, (pred_start, pred_end) in enumerate(zip(pred_start_batch, pred_end_batch)):
-
             # Original context tokens (no UNKs or padding) for this example
-            context_tokens = batch.context_tokens[ex_idx] # list of strings
+            context_tokens = batch.context_tokens[ex_idx]  # list of strings
 
             # Check the predicted span is in range
             assert pred_start in range(len(context_tokens))
             assert pred_end in range(len(context_tokens))
 
             # Predicted answer tokens
-            pred_ans_tokens = context_tokens[pred_start : pred_end +1] # list of strings
+            pred_ans_tokens = context_tokens[pred_start: pred_end + 1]  # list of strings
 
             # Detokenize and add to dict
             uuid = batch.uuids[ex_idx]
@@ -274,7 +276,8 @@ def generate_answers(session, model, word2id, qn_uuid_data, context_token_data, 
         batch_num += 1
 
         if batch_num % 10 == 0:
-            print "Generated answers for %i/%i batches = %.2f%%" % (batch_num, num_batches, batch_num*100.0/num_batches)
+            print "Generated answers for %i/%i batches = %.2f%%" % (
+            batch_num, num_batches, batch_num * 100.0 / num_batches)
 
     print "Finished generating answers for dataset."
 
@@ -296,15 +299,16 @@ def generate_answers_prob(session, model, word2id, qn_uuid_data, context_token_d
     Outputs:
       uuid2ans: dictionary mapping uuid (string) to predicted answer (string; detokenized)
     """
-    uuid2ans = {} # maps uuid to string containing predicted answer
+    uuid2ans = {}  # maps uuid to string containing predicted answer
     data_size = len(qn_uuid_data)
-    num_batches = ((data_size-1) / model.FLAGS.batch_size) + 1
+    num_batches = ((data_size - 1) / model.FLAGS.batch_size) + 1
     batch_num = 0
     detokenizer = MosesDetokenizer()
 
     print "Generating answers..."
 
-    for batch in get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, model.FLAGS.batch_size, model.FLAGS.context_len, model.FLAGS.question_len):
+    for batch in get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, model.FLAGS.batch_size,
+                                     model.FLAGS.context_len, model.FLAGS.question_len):
 
         # Get the predicted spans
         pred_start_batch, pred_end_batch, maxprob_batch = model.get_start_end_pos(session, batch)
@@ -316,16 +320,15 @@ def generate_answers_prob(session, model, word2id, qn_uuid_data, context_token_d
 
         # For each example in the batch:
         for ex_idx, (pred_start, pred_end, maxprob) in enumerate(zip(pred_start_batch, pred_end_batch, maxprob_batch)):
-
             # Original context tokens (no UNKs or padding) for this example
-            context_tokens = batch.context_tokens[ex_idx] # list of strings
+            context_tokens = batch.context_tokens[ex_idx]  # list of strings
 
             # Check the predicted span is in range
             assert pred_start in range(len(context_tokens))
             assert pred_end in range(len(context_tokens))
 
             # Predicted answer tokens
-            pred_ans_tokens = context_tokens[pred_start : pred_end +1] # list of strings
+            pred_ans_tokens = context_tokens[pred_start: pred_end + 1]  # list of strings
 
             # Detokenize and add to dict
             uuid = batch.uuids[ex_idx]
@@ -334,13 +337,12 @@ def generate_answers_prob(session, model, word2id, qn_uuid_data, context_token_d
         batch_num += 1
 
         if batch_num % 10 == 0:
-            print "Generated answers for %i/%i batches = %.2f%%" % (batch_num, num_batches, batch_num*100.0/num_batches)
+            print "Generated answers for %i/%i batches = %.2f%%" % (
+            batch_num, num_batches, batch_num * 100.0 / num_batches)
 
     print "Finished generating answers for dataset."
 
     return uuid2ans
-
-
 
 
 def generate_answers_attention(session, model, word2id, qn_uuid_data, context_token_data, qn_token_data):
@@ -358,15 +360,16 @@ def generate_answers_attention(session, model, word2id, qn_uuid_data, context_to
     Outputs:
       uuid2ans: dictionary mapping uuid (string) to predicted answer (string; detokenized)
     """
-    uuid2ans = {} # maps uuid to string containing predicted answer
+    uuid2ans = {}  # maps uuid to string containing predicted answer
     data_size = len(qn_uuid_data)
-    num_batches = ((data_size-1) / model.FLAGS.batch_size) + 1
+    num_batches = ((data_size - 1) / model.FLAGS.batch_size) + 1
     batch_num = 0
     detokenizer = MosesDetokenizer()
 
     print "Generating answers..."
 
-    for batch in get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, model.FLAGS.batch_size, model.FLAGS.context_len, model.FLAGS.question_len):
+    for batch in get_batch_generator(word2id, qn_uuid_data, context_token_data, qn_token_data, model.FLAGS.batch_size,
+                                     model.FLAGS.context_len, model.FLAGS.question_len):
 
         # Get the predicted spans
         pred_start_batch, pred_end_batch, maxprob_batch = model.get_start_end_pos(session, batch)
@@ -379,17 +382,17 @@ def generate_answers_attention(session, model, word2id, qn_uuid_data, context_to
         attn_distribution_batch = attn_distribution.tolist()
 
         # For each example in the batch:
-        for ex_idx, (pred_start, pred_end, maxprob, attn_dist) in enumerate(zip(pred_start_batch, pred_end_batch, maxprob_batch, attn_distribution_batch)):
-
+        for ex_idx, (pred_start, pred_end, maxprob, attn_dist) in enumerate(
+                zip(pred_start_batch, pred_end_batch, maxprob_batch, attn_distribution_batch)):
             # Original context tokens (no UNKs or padding) for this example
-            context_tokens = batch.context_tokens[ex_idx] # list of strings
+            context_tokens = batch.context_tokens[ex_idx]  # list of strings
 
             # Check the predicted span is in range
             assert pred_start in range(len(context_tokens))
             assert pred_end in range(len(context_tokens))
 
             # Predicted answer tokens
-            pred_ans_tokens = context_tokens[pred_start : pred_end +1] # list of strings
+            pred_ans_tokens = context_tokens[pred_start: pred_end + 1]  # list of strings
 
             # Detokenize and add to dict
             uuid = batch.uuids[ex_idx]
@@ -398,9 +401,9 @@ def generate_answers_attention(session, model, word2id, qn_uuid_data, context_to
         batch_num += 1
 
         if batch_num % 10 == 0:
-            print "Generated answers for %i/%i batches = %.2f%%" % (batch_num, num_batches, batch_num*100.0/num_batches)
+            print "Generated answers for %i/%i batches = %.2f%%" % (
+            batch_num, num_batches, batch_num * 100.0 / num_batches)
 
     print "Finished generating answers for dataset."
 
     return uuid2ans
-

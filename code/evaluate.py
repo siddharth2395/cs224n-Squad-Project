@@ -1,15 +1,17 @@
 """ Official evaluation script for v1.1 of the SQuAD dataset. """
 from __future__ import print_function
-from collections import Counter
-import string
-import re
+
 import argparse
 import json
+import re
+import string
 import sys
+from collections import Counter
 
 
 def normalize_answer(s):
     """Lower text and remove punctuation, articles and extra whitespace."""
+
     def remove_articles(text):
         return re.sub(r'\b(a|an|the)\b', ' ', text)
 
