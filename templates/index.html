@@ -33,18 +33,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     </style>
 </head>
 <body class="bg">
@@ -60,10 +48,15 @@
         <div class="col-lg-8 text-center"><h2>Q & A Bot</h2></div>
         <div class="col-lg-2"></div>
     </div>
-    <form action="/" method="post">
-        <div class="row">
+    <div class="row mt-3">
+        <div class="col-lg-10 offset-lg-1"><b>Direction:</b><br> Select a paragraph and write your own question. The
+            answer is always a subphrase of the paragraph, remember it when you ask a question!
+        </div>
+    </div>
+    <form id="myform" action="/" method="post">
+        <div class="row mt-3">
             <div class="col-lg-10 m-auto">
-                <label for="context">Paragraph:</label>
+                <label for="context"><b>Paragraph:</b></label>
                 {% if c %}
                 <textarea name="context" class="form-control" rows="4" id="context"
                           required>{{c}}</textarea>
@@ -76,7 +69,7 @@
 
         <div class="row mt-3">
             <div class="col-lg-10 m-auto">
-                <label for="question">Question:</label>
+                <label for="question"><b>Question:</b></label>
                 {% if q%}
 
                 <input name="question" value="{{q}}" type="text" class="form-control" id="question" required>
@@ -90,18 +83,26 @@
         {% if ans %}
         <div class="row mt-3">
             <div class="col-lg-10 m-auto">
-                <span>{{ ans }}</span>
+                <label for="answer"><b>Answer:</b></label><br>
+                <span id="answer">{{ ans }}</span>
             </div>
         </div>
         {% endif %}
-        <div class="row mt-3">
+        <div class="row mt-3 mb-3">
             <div class="col-lg-4 offset-lg-1">
                 <label class="btn btn-dark"><span>Find Answer</span><input type="submit" hidden></label>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <img src="{{ url_for('static', filename='img/loader.gif') }}" width="480">
+                </div>
             </div>
         </div>
     </form>
 </div>
-
 <!-- Optional JavaScript -->
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
@@ -113,5 +114,17 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"
         integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
         crossorigin="anonymous"></script>
+<script>
+$('#myform').submit(function(e) {
+    e.preventDefault(); // don't submit multiple times
+    this.submit(); // use the native submit method of the form element
+     $('#exampleModal').modal('show'); //Open the model
+});
+
+
+
+
+
+</script>
 </body>
 </html>
